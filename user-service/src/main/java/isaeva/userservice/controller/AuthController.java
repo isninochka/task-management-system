@@ -1,5 +1,6 @@
 package isaeva.userservice.controller;
 
+import isaeva.userservice.dto.AuthResponse;
 import isaeva.userservice.dto.JwtResponse;
 import isaeva.userservice.dto.UserLoginRequest;
 import isaeva.userservice.dto.UserRegistrationRequest;
@@ -7,6 +8,8 @@ import isaeva.userservice.model.User;
 import isaeva.userservice.security.JwtUtil;
 import isaeva.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,25 +29,13 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("register")
-    public JwtResponse register (@RequestBody UserRegistrationRequest request) {
-        User user = userService.register(request);
-        String token = jwtUtil.generateJwtToken(user.getUsername());
-        return new JwtResponse(token, user.getUsername());
+    public ResponseEntity<AuthResponse> register (@RequestBody UserRegistrationRequest request) {
+           return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(request));
     }
 
     @PostMapping("/login")
-    public JwtResponse login (@RequestBody UserLoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.usernameOrEmail(),
-                        request.password()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String token = jwtUtil.generateJwtToken(authentication.getName());
-
-        return new JwtResponse(token, authentication.getName());
+    public ResponseEntity<JwtResponse> login (@RequestBody UserLoginRequest request) {
+      return ResponseEntity.ok(userService.login(request));
     }
 
 }

@@ -1,9 +1,11 @@
 package isaeva.taskservice.controller;
 
+import isaeva.taskservice.dto.TaskHistoryDto;
 import isaeva.taskservice.dto.TaskRequest;
 import isaeva.taskservice.dto.TaskResponse;
 import isaeva.taskservice.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
@@ -30,7 +32,8 @@ public class TaskController {
     public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request,
                                                    @AuthenticationPrincipal User user) {
         TaskResponse created = taskService.createTask(request, user.getUsername());
-        return ResponseEntity.status(201).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(taskService.createTask(request, user.getUsername()));
     }
 
     @GetMapping
@@ -55,5 +58,11 @@ public class TaskController {
                                            @AuthenticationPrincipal User user) {
         taskService.deleteTask(id,user.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{taskId}/history")
+    public ResponseEntity<List<TaskHistoryDto>> getHistory(@PathVariable Long taskId,
+                                                           @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok((taskService.getTaskHistory(taskId, user.getUsername())));
     }
 }

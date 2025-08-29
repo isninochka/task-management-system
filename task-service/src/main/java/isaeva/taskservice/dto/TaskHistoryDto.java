@@ -7,6 +7,7 @@ public record TaskHistoryDto(
         Long taskId,
         String previousStatus,
         String newStatus,
-        Long changedBy,
-        LocalDateTime changedAt) {
+        LocalDateTime changedAt,
+        String username
+) {
 }
