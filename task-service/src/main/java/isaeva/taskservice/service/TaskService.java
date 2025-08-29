@@ -3,6 +3,9 @@ package isaeva.taskservice.service;
 import isaeva.taskservice.dto.TaskRequest;
 import isaeva.taskservice.dto.TaskResponse;
 import isaeva.taskservice.enums.TaskStatus;
+import isaeva.taskservice.exception.BadRequestException;
+import isaeva.taskservice.exception.ForbiddenException;
+import isaeva.taskservice.exception.NotFoundException;
 import isaeva.taskservice.model.Task;
 import isaeva.taskservice.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,16 +45,16 @@ public class TaskService {
 
     public TaskResponse startTask (Long id,String username) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         checkOwnership(task,username);
 
         if (task.getTaskStatus() == TaskStatus.DELETED) {
-            throw new RuntimeException("Task is deleted");
+            throw new BadRequestException("Task is deleted");
         }
 
         if (task.getTaskStatus() == TaskStatus.COMPLETED) {
-            throw new RuntimeException("Can't start a completed task");
+            throw new BadRequestException("Can't start a completed task");
         }
 
         if (task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
@@ -64,11 +67,11 @@ public class TaskService {
 
     public TaskResponse completeTask (Long id,String username) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         checkOwnership(task,username);
         if (task.getTaskStatus() == TaskStatus.DELETED) {
-            throw new RuntimeException("Task is deleted");
+            throw new BadRequestException("Task is deleted");
         }
 
         if (task.getTaskStatus() == TaskStatus.COMPLETED) {
@@ -76,7 +79,7 @@ public class TaskService {
         }
 
         if (task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
-            throw new RuntimeException("Task must be IN_PROGRESS to be completed");
+            throw new BadRequestException("Task must be IN_PROGRESS to be completed");
         }
 
         task.setTaskStatus(TaskStatus.COMPLETED);
@@ -86,11 +89,11 @@ public class TaskService {
     public void deleteTask (Long id, String username) {
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         checkOwnership(task,username);
         if (task.getTaskStatus() == TaskStatus.DELETED) {
-            throw new RuntimeException("Task is deleted");
+            throw new BadRequestException("Task is deleted");
         }
 
         task.setTaskStatus(TaskStatus.DELETED);
@@ -98,7 +101,7 @@ public class TaskService {
     }
     private void checkOwnership(Task task, String username) {
         if (!task.getUsername().equals(username)) {
-            throw new RuntimeException("Not allowed to modify this task");
+            throw new ForbiddenException("Not allowed to modify this task");
         }
     }
     private TaskResponse map(Task task) {
