@@ -1,6 +1,6 @@
 package isaeva.userservice.dto;
 
-public record UserrLoginRequest(
+public record UserLoginRequest(
 
         String usernameOrEmail,
         String password
