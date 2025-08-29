@@ -1,0 +1,31 @@
+
+services:
+  postgres-user:
+    image: postgres:15
+    container_name: postgres-user
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+
+    ports:
+      - "5433:5432"
+    networks:
+      - task-net
+  user-service:
+    build: ./user-service
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/userdb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+    depends_on:
+      - postgres-user
+    networks:
+      - task-net
+
+networks:
+  task-net:
+    driver: bridge
+
