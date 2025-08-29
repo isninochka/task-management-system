@@ -14,12 +14,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void register(UserRegistrationRequest request) {
+    public User register(UserRegistrationRequest request) {
         User user = new User();
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
-        userRepository.save(user);
+
+        return userRepository.save(user);
     }
 
 }
