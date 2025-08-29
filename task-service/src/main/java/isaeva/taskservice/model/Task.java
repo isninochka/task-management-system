@@ -1,8 +1,10 @@
 package isaeva.taskservice.model;
 
-import isaeva.taskservice.enums.Status;
+import isaeva.taskservice.enums.TaskStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,8 +34,8 @@ public class Task {
     @Column(nullable = false)
     private String description;
 
-
-    private Status status;
+    @Enumerated(EnumType.STRING)
+    private TaskStatus taskStatus;
 
     @Column(nullable = false)
     private String username;

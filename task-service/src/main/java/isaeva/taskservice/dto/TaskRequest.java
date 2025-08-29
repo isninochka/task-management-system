@@ -1,10 +1,9 @@
 package isaeva.taskservice.dto;
 
-import isaeva.taskservice.enums.Status;
+import isaeva.taskservice.enums.TaskStatus;
 
 public record TaskRequest(
         String title,
-        String description,
-        Status status
+        String description
 ) {
 }
