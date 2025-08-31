@@ -1,31 +1,72 @@
-
 services:
   postgres-user:
     image: postgres:15
     container_name: postgres-user
+    restart: always
     environment:
-      POSTGRES_DB: userdb
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: userdb
     ports:
       - "5433:5432"
-    networks:
-      - task-net
+    volumes:
+      - user-data:/var/lib/postgresql/data
+
+  postgres-task:
+    image: postgres:15
+    container_name: postgres-task
+    restart: always
+    environment:
+      POSTGRES_USER: task
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: taskdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - task-data:/var/lib/postgresql/data
+
   user-service:
     build: ./user-service
+    container_name: user-service
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/userdb
       SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_PASSWORD: pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     depends_on:
       - postgres-user
-    networks:
-      - task-net
 
-networks:
-  task-net:
-    driver: bridge
+  task-service:
+    build: ./task-service
+    container_name: task-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-task:5432/taskdb
+      SPRING_DATASOURCE_USERNAME: task
+      SPRING_DATASOURCE_PASSWORD: pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - postgres-task
 
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - task-service
+      - notification-service
+
+volumes:
+  user-data:
+  task-data:

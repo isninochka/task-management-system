@@ -1,21 +1,19 @@
 package isaeva.userservice.service;
 
 import isaeva.userservice.dto.AuthResponse;
-import isaeva.userservice.dto.JwtResponse;
 import isaeva.userservice.dto.UserLoginRequest;
 import isaeva.userservice.dto.UserRegistrationRequest;
 import isaeva.userservice.exception.UserAlreadyExistsException;
+import isaeva.userservice.exception.UserNotFoundException;
 import isaeva.userservice.mapper.UserMapper;
 import isaeva.userservice.model.User;
 import isaeva.userservice.repository.UserRepository;
-import isaeva.userservice.security.JwtAuthenticationFilter;
-import isaeva.userservice.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Service
@@ -24,35 +22,48 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(UserRegistrationRequest request) {
-       if (userRepository.existsByUsername(request.username())){
-           throw new UserAlreadyExistsException("User with username " + request.username() + " already exist");
-       }
+        if (userRepository.existsByUsername(request.username())) {
+            throw new UserAlreadyExistsException("Username already exists");
+        }
 
-       User user = userMapper.toEntity(request);
-       user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setCreatedAt(LocalDateTime.now());
 
-       userRepository.save(user);
-
-       String token = jwtUtil.generateJwtToken(user.getUsername());
-       return userMapper.toAuthResponse(user, token);
+        userRepository.save(user);
+        return userMapper.toAuthResponse(user);
     }
 
-    public JwtResponse login(UserLoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.usernameOrEmail(),request.password())
-        );
+    public AuthResponse authenticateUser(UserLoginRequest request) {
 
-        String token = jwtUtil.generateJwtToken(request.usernameOrEmail());
-        return new JwtResponse(token, "Bearer", request.usernameOrEmail());
+        User user = userRepository.findByUsernameOrEmail(request.usernameOrEmail())
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or email"));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BadCredentialsException("Invalid password");
+        }
+        return userMapper.toAuthResponse(user);
     }
 
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Username " + username + " not found"));
+    private User getById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
+
+    public void changePassword(Long id, String oldPassword, String newPassword) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new BadCredentialsException("Invalid password");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
 
 }

@@ -32,7 +32,7 @@ public class TaskHistory {
     private String username;
 
     @Enumerated(EnumType.STRING)
-    private TaskStatus oldStatus;
+    private TaskStatus previousStatus;
 
     @Enumerated(EnumType.STRING)
     private TaskStatus newStatus;

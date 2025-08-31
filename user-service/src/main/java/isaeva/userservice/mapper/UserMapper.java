@@ -11,6 +11,6 @@ public interface UserMapper {
 
     User toEntity(UserRegistrationRequest request);
 
-    AuthResponse toAuthResponse(User user, String token);
+    AuthResponse toAuthResponse(User user);
 
 }

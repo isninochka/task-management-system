@@ -29,28 +29,31 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final TaskHistoryRepository taskHistoryRepository;
     private final TaskHistoryMapper taskHistoryMapper;
+    private final UserServiceClient userServiceClient;
 
-    public TaskResponse createTask(TaskRequest request, String username) {
+    public TaskResponse createTask(TaskRequest request, Long userId) {
 
-        Task task = taskMapper.toEntity(request);
-        task.setUsername(username);
+        Task task = taskMapper.toTask(request);
+        task.setUserId(userId);
         task.setTaskStatus(TaskStatus.NEW);
         task.setCreatedAt(LocalDateTime.now());
         taskRepository.save(task);
 
-        saveTaskHistory(task.getId(), username, null, TaskStatus.NEW);
-        return taskMapper.toDto(task);
+        saveTaskHistory(task.getId(), userServiceClient.getUsernameById(userId), null, TaskStatus.NEW);
+
+        TaskResponse taskResponse = taskMapper.toTaskResponse(task);
+        return fillUsername(taskResponse);
     }
 
     public List<TaskResponse> getTasksByUser(String username) {
         return taskRepository.findByUsernameAndTaskStatusNot(username, TaskStatus.DELETED)
                 .stream()
-                .map(taskMapper::toDto)
+                .map(taskMapper::toTaskResponse)
                 .toList();
     }
 
-    public TaskResponse startTask(Long id, String username) {
-        Task task = findOwnedTask(id, username);
+    public TaskResponse startTask(Long id, Long userId) {
+        Task task = findOwnedTask(id, userId);
 
         if (task.getTaskStatus() == TaskStatus.DELETED) {
             throw new BadRequestException("Task is deleted");
@@ -61,19 +64,20 @@ public class TaskService {
         }
 
         if (task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
-            return taskMapper.toDto(task);
+            return taskMapper.toTaskResponse(task);
         }
 
         TaskStatus old = task.getTaskStatus();
         task.setTaskStatus(TaskStatus.IN_PROGRESS);
         taskRepository.save(task);
 
-        saveTaskHistory(task.getId(), username, old, TaskStatus.IN_PROGRESS);
-        return taskMapper.toDto(task);
+        saveTaskHistory(task.getId(), userServiceClient.getUsernameById(userId), old, TaskStatus.IN_PROGRESS);
+
+        return fillUsername(taskMapper.toTaskResponse(task));
     }
 
-    public TaskResponse completeTask(Long id, String username) {
-        Task task = findOwnedTask(id, username);
+    public TaskResponse completeTask(Long id, Long userId) {
+        Task task = findOwnedTask(id, userId);
 
         if (task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
             throw new BadRequestException("Task must be IN_PROGRESS to be complete");
@@ -83,13 +87,14 @@ public class TaskService {
         task.setTaskStatus(TaskStatus.COMPLETED);
         taskRepository.save(task);
 
-        saveTaskHistory(task.getId(), username, old, TaskStatus.COMPLETED);
-        return taskMapper.toDto(task);
+        saveTaskHistory(task.getId(), userServiceClient.getUsernameById(userId), old, TaskStatus.COMPLETED);
+
+        return fillUsername(taskMapper.toTaskResponse(task));
     }
 
-    public void deleteTask(Long id, String username) {
+    public void deleteTask(Long id, Long userId) {
 
-        Task task = findOwnedTask(id, username);
+        Task task = findOwnedTask(id, userId);
         if (task.getTaskStatus() == TaskStatus.DELETED) {
             throw new BadRequestException("Task was already deleted");
         }
@@ -98,12 +103,12 @@ public class TaskService {
         task.setTaskStatus(TaskStatus.DELETED);
         taskRepository.save(task);
 
-        saveTaskHistory(task.getId(), username, old, TaskStatus.DELETED);
+        saveTaskHistory(task.getId(), userServiceClient.getUsernameById(userId), old, TaskStatus.DELETED);
     }
 
-    public List<TaskHistoryDto> getTaskHistory(Long taskId, String username) {
+    public List<TaskHistoryDto> getTaskHistory(Long taskId, Long userId) {
         taskRepository.findById(taskId)
-                .filter(task -> task.getUsername().equals(username))
+                .filter(task -> task.getUserId().equals(userId))
                 .orElseThrow(() -> new ForbiddenException("Not allowed"));
 
         return taskHistoryRepository.findByTaskId(taskId)
@@ -112,11 +117,11 @@ public class TaskService {
                 .toList();
     }
 
-    private Task findOwnedTask(Long id, String username) {
+    private Task findOwnedTask(Long id, Long userId) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found"));
 
-        if (!task.getUsername().equals(username)) {
+        if (!task.getUserId().equals(userId)) {
             throw new ForbiddenException("Not allowed to modify this task");
         }
         return task;
@@ -124,13 +129,26 @@ public class TaskService {
 
     private void saveTaskHistory(Long taskId, String username, TaskStatus oldStatus, TaskStatus newStatus) {
 
-        TaskHistory taskHistory = TaskHistory.builder()
+        TaskHistory.builder()
                 .taskId(taskId)
-                .oldStatus(oldStatus)
+                .previousStatus(oldStatus)
                 .newStatus(newStatus)
                 .username(username)
                 .changedAt(LocalDateTime.now())
                 .build();
+    }
+
+    private TaskResponse fillUsername(TaskResponse response) {
+        String username = userServiceClient.getUsernameById(response.userId());
+        return new TaskResponse(
+                response.id(),
+                response.title(),
+                response.description(),
+                response.taskStatus(),
+                response.userId(),
+                username,
+                response.createdAt()
+        );
     }
 
 

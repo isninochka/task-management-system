@@ -1,7 +1,5 @@
 package isaeva.taskservice.dto;
 
-import isaeva.taskservice.enums.TaskStatus;
-
 import java.time.LocalDateTime;
 
 public record TaskResponse(
@@ -9,6 +7,7 @@ public record TaskResponse(
         String title,
         String description,
         String taskStatus,
+        Long userId,
         String username,
         LocalDateTime createdAt
 ) {

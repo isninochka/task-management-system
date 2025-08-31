@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class NotificationService {
 
-    public void sendNotification(NotificationRequest request) {
+    public void send(NotificationRequest request) {
 
         log.info("Sending notification to {} with subject '{}' and message '{}'",
                 request.recipient(), request.subject(), request.message());

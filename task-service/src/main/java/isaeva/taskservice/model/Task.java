@@ -38,8 +38,7 @@ public class Task {
     private TaskStatus taskStatus;
 
     @Column(nullable = false)
-    private String username;
-
+    private Long userId;
 
     private LocalDateTime createdAt;
 }
