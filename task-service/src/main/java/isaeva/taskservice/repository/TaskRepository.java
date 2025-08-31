@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    List<Task> findByUsername(String username);
 
-    List<Task> findByUsernameAndTaskStatusNot(String username, TaskStatus status);
+    List<Task> findByUsernameAndTaskStatusNot(String username, TaskStatus taskStatus);
 }

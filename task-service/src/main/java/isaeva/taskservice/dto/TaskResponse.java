@@ -7,7 +7,6 @@ public record TaskResponse(
         String title,
         String description,
         String taskStatus,
-        Long userId,
         String username,
         LocalDateTime createdAt
 ) {
