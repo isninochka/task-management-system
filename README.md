@@ -2,7 +2,7 @@
 
 🌍 [Deutsch](#-deutsch) | [English](#-english) | [Русский](#-русский)  
 
-🇩🇪 Deutsch
+## 🇩🇪 Deutsch
 📖 Projektbeschreibung
 
 Das Task Management System ist eine Microservice-Anwendung zum Verwalten von Benutzern, Aufgaben und Benachrichtigungen.
@@ -82,7 +82,7 @@ X-User-Id: 1
 GET http://localhost:8080/api/tasks
 X-User-Id: 1
 
-🇬🇧 English
+## 🇬🇧 English
 📖 Project Description
 
 The Task Management System is a microservice-based application for managing users, tasks, and notifications.
@@ -160,7 +160,7 @@ X-User-Id: 1
 GET http://localhost:8080/api/tasks
 X-User-Id: 1
 
-🇷🇺 Русский
+## 🇷🇺 Русский
 📖 Описание проекта
 
 Task Management System — это микросервисное приложение для управления пользователями, задачами и уведомлениями.
