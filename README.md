@@ -1,6 +1,6 @@
 📘 Task Management System
 
-🇩🇪 Deutsch | 🇬🇧 English | 🇷🇺 Русский
+🌍 [Deutsch](#-deutsch) | [English](#-english) | [Русский](#-русский)  
 
 🇩🇪 Deutsch
 📖 Projektbeschreibung
