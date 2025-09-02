@@ -6,6 +6,7 @@ import isaeva.userservice.dto.UserLoginRequest;
 import isaeva.userservice.dto.UserRegistrationRequest;
 import isaeva.userservice.jwt.JwtUtil;
 import isaeva.userservice.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,7 +27,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public AuthResponse register(@RequestBody UserRegistrationRequest request) {
+    public AuthResponse register(@RequestBody @Valid UserRegistrationRequest request) {
 
         var user = userService.register(request);
         String token = jwtUtil.generateJwtToken(user.token());
@@ -35,7 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody UserLoginRequest request) {
+    public AuthResponse login(@RequestBody @Valid UserLoginRequest request) {
 
         var user = userService.authenticateUser(request);
         String token = jwtUtil.generateJwtToken(user.token());
@@ -45,7 +46,7 @@ public class AuthController {
 
     @PatchMapping("/{id}/password")
     public void changePassword(@PathVariable Long id,
-                               @RequestBody ChangePasswordRequest request) {
+                               @RequestBody @Valid ChangePasswordRequest request) {
 
         log.info("Changing password for user {}", id);
         userService.changePassword(id,request.oldPassword(),request.newPassword());
