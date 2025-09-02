@@ -1,4 +1,4 @@
-package isaeva.userservice.dto;
+package isaeva.apigateway.dto;
 
 public record AuthResponse(
 
