@@ -4,8 +4,8 @@ services:
     container_name: postgres-user
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: userdb
     ports:
       - "5433:5432"
@@ -17,8 +17,8 @@ services:
     container_name: postgres-task
     restart: always
     environment:
-      POSTGRES_USER: task
-      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: taskdb
     ports:
       - "5434:5432"
@@ -26,40 +26,44 @@ services:
       - task-data:/var/lib/postgresql/data
 
   user-service:
-    build: ./user-service
+    build: ../user-service
     container_name: user-service
+    restart: always
     ports:
       - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/userdb
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: pass
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     depends_on:
       - postgres-user
 
   task-service:
-    build: ./task-service
+    build: ../task-service
     container_name: task-service
+    restart: always
     ports:
       - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-task:5432/taskdb
-      SPRING_DATASOURCE_USERNAME: task
-      SPRING_DATASOURCE_PASSWORD: pass
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     depends_on:
       - postgres-task
 
   notification-service:
-    build: ./notification-service
+    build: ../notification-service
     container_name: notification-service
+    restart: always
     ports:
       - "8083:8083"
 
   api-gateway:
-    build: ./api-gateway
+    build: ../api-gateway
     container_name: api-gateway
+    restart: always
     ports:
       - "8080:8080"
     depends_on:

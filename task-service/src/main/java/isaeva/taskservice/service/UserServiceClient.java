@@ -1,5 +1,7 @@
 package isaeva.taskservice.service;
 
+import isaeva.taskservice.config.UserServiceConfig;
+import isaeva.taskservice.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -9,18 +11,24 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class UserServiceClient {
 
     private final WebClient.Builder webClientBuilder;
+    private final UserServiceConfig userServiceConfig;
 
     public String getUsernameById(Long userId) {
 
-        return webClientBuilder.build()
+        UserResponse user = webClientBuilder.build()
                 .get()
-                .uri("http://localhost:8081/api/auth/"+userId)
+                .uri(userServiceConfig.getUrl() + "/api/auth/" + userId)
                 .retrieve()
                 .bodyToMono(UserResponse.class)
-                .map(UserResponse::username)
                 .block();
 
-    }
-    private record UserResponse(Long id, String username) {}
+        if (user == null) {
+            throw new NotFoundException("User not found with id " + userId);
+        }
 
+        return user.username();
+    }
+
+    private record UserResponse(Long id, String username) {
+    }
 }

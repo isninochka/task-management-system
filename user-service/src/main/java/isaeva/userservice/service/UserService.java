@@ -38,8 +38,8 @@ public class UserService {
 
     public AuthResponse authenticateUser(UserLoginRequest request) {
 
-        User user = userRepository.findByUsernameOrEmail(request.usernameOrEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid username or email"));
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() -> new BadCredentialsException("Invalid token or email"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid password");

@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
                 .body(error("INTERNAL_SERVER_ERROR", ex.getMessage()));
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?> handleNotFoundException(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(error("NOT_FOUND", ex.getMessage()));
+    }
+
 
 
     private Map<String,Object> error(String code, String message) {

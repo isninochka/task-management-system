@@ -1,6 +1,5 @@
-package isaeva.apigateway.util;
+package isaeva.userservice.jwt;
 
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -12,16 +11,19 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final String jwtSecret = "mySuperSecretKeyForJwtWhichShouldBeVeryLong";
+    private final Key key;
+    private final long jwtExpirationMs;
 
-    private final Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    public JwtUtil(JwtProperties properties) {
+        this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes());
+        this.jwtExpirationMs = properties.getExpiration();
+    }
 
     public String generateJwtToken(String username) {
-        long jwtExpiration = 3600000;
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date().getTime() + jwtExpiration)))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -30,7 +32,7 @@ public class JwtUtil {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
@@ -38,10 +40,11 @@ public class JwtUtil {
     public boolean validateJwtToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(key).build()
-                    .parseClaimsJwt(token);
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (JwtException e) {
+        } catch (Exception e) {
             return false;
         }
     }
