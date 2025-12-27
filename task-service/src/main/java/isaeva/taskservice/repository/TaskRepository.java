@@ -1,7 +1,7 @@
 package isaeva.taskservice.repository;
 
 import isaeva.taskservice.enums.TaskStatus;
-import isaeva.taskservice.model.Task;
+import isaeva.taskservice.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

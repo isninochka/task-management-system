@@ -1,0 +1,1 @@
+INSERT INTO users (username,password,email,role) VALUES ('admin','$2b$12$wFZDkBgPe.7jqyzKglomXO6FVxG/jnrRCKK9CGEAQoADaRKmoe4xC','admin@local','ROLE_ADMIN') ON CONFLICT (username) DO NOTHING;

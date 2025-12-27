@@ -1,69 +1,63 @@
 package isaeva.taskservice.controller;
 
-import isaeva.taskservice.dto.TaskHistoryDto;
-import isaeva.taskservice.dto.TaskRequest;
-import isaeva.taskservice.dto.TaskResponse;
+import isaeva.dtolib.dto.TaskDto;
+import isaeva.taskservice.entity.Task;
+import isaeva.taskservice.mapper.TaskMapper;
 import isaeva.taskservice.service.TaskService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping("/tasks")
 @RequiredArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
-
-    @PostMapping
-    public TaskResponse createTask(@RequestBody @Valid TaskRequest request,
-                                   @RequestHeader("X-Username") String username) {
-        log.info("User {} is creating a task", username);
-        return taskService.createTask(request, username);
-    }
+    private final TaskMapper taskMapper;
 
     @GetMapping
-    public List<TaskResponse> getMyTasks(@RequestHeader("X-Username") String username) {
-        log.info("User {} is fetching tasks", username);
-        return taskService.getTasksByUser(username);
+    public List<TaskDto> getAllTasks() {
+
+        log.info("All tasks found");
+
+        return taskService.allTasks().stream()
+                .map(taskMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    @PostMapping("/{id}/start")
-    public TaskResponse startTask(@PathVariable Long id,
-                                  @RequestHeader("X-Username") String username) {
-        log.info("User {} is starting task {}", username, id);
-        return taskService.startTask(id, username);
+    @PostMapping
+    public TaskDto createTask(@RequestBody TaskDto taskDto) {
+
+        Task task = taskService.create(taskMapper.toEntity(taskDto));
+
+        log.info("Created task: {}", task);
+
+        return taskMapper.toDto(task);
     }
 
-    @PostMapping("/{id}/complete")
-    public TaskResponse completeTask(@PathVariable Long id,
-                                     @RequestHeader("X-Username") String username) {
-        log.info("User {} is completing task {}", username, id);
-        return taskService.completeTask(id, username);
+    @PutMapping("/{id}")
+    public TaskDto updateTask(@PathVariable Long id, @RequestBody TaskDto taskDto) {
+        Task task = taskService.update(id, taskMapper.toEntity(taskDto));
+        log.info("Updated task: {}", task);
+        return taskMapper.toDto(task);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id,
-                           @RequestHeader("X-Username") String username) {
-        log.info("User {} is deleting task {}", username, id);
-        taskService.deleteTask(id, username);
+    public void cancelTask(@PathVariable Long id) {
+        taskService.cancelled(id);
     }
 
-    @GetMapping("/{taskId}/history")
-    public List<TaskHistoryDto> getHistory(@PathVariable Long taskId,
-                                           @RequestHeader("X-Username") String username) {
-        log.info("User {} is fetching history for task {}", username, taskId);
-        return taskService.getTaskHistory(taskId, username);
-    }
+
 }

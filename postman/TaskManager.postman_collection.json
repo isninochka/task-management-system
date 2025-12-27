@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "Task Manager API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"user1\",\n  \"password\": \"pass\",\n  \"email\": \"user1@local\"\n}"
+        },
+        "url": "http://localhost:8080/auth/register"
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"user1\",\n  \"password\": \"pass\"\n}"
+        },
+        "url": "http://localhost:8080/auth/login"
+      }
+    },
+    {
+      "name": "Get Tasks",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "http://localhost:8080/tasks"
+      }
+    }
+  ]
+}

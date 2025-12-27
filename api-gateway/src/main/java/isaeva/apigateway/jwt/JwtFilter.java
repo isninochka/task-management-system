@@ -1,56 +1,55 @@
 package isaeva.apigateway.jwt;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
-public class JwtFilter extends OncePerRequestFilter {
-    private final JwtUtil jwtUtil;
+public class JwtFilter implements GlobalFilter {
+
+    @Value("${jwt.secret:change_me}")
+    private String secret;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-        log.debug("Request URI: {}", path);
-        if (path.startsWith("/api/auth/")) {
-            filterChain.doFilter(request, response);
-            return;
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        var request = exchange.getRequest();
+        String path = request.getURI().getPath();
+        if (path.startsWith("/auth") || path.startsWith("/actuator") || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger")) {
+            return chain.filter(exchange);
         }
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtUtil.validateJwtToken(token)) {
-                String username = jwtUtil.getUsernameFromJwtToken(token);
-
-                User userDetails = new User(username, "", Collections.emptyList());
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
-
-                MutableHttpServletRequest mutableRequest = new MutableHttpServletRequest(request);
-                mutableRequest.putHeader("X-Username", username);
-                filterChain.doFilter(mutableRequest, response);
-                return;
-            }
+        String authorization = request.getHeaders().getFirst("Authorization");
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
-        filterChain.doFilter(request, response);
+        String token = authorization.substring(7);
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            String subject = claims.getSubject();
+            Object roles = claims.get("roles");
+            ServerHttpRequest mutated = request.mutate().header("X-User", subject)
+                    .header("X-Roles", roles == null ? "" : roles.toString()).build();
+            return chain.filter(exchange.mutate().request(mutated).build());
+        } catch (Exception ex) {
+            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
     }
 }

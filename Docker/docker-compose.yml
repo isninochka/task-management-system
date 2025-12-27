@@ -4,9 +4,9 @@ services:
     container_name: postgres-user
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: userdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_DB}
     ports:
       - "5433:5432"
     volumes:
@@ -17,39 +17,38 @@ services:
     container_name: postgres-task
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: taskdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${TASK_DB}
     ports:
       - "5434:5432"
     volumes:
       - task-data:/var/lib/postgresql/data
 
   user-service:
-    build: ../user-service
+    build: ./user-service
     container_name: user-service
     restart: always
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/userdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5432/${USER_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - postgres-user
 
   task-service:
-    build: ../task-service
+    build: ./task-service
     container_name: task-service
     restart: always
     ports:
       - "8082:8082"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-task:5432/taskdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-task:5432/${TASK_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       - postgres-task
 
@@ -64,13 +63,22 @@ services:
     build: ../api-gateway
     container_name: api-gateway
     restart: always
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - USER_SERVICE_URL=http://user-service:8081
+      - TASK_SERVICE_URL=http://task-service:8082
     ports:
-      - "8080:8080"
+      - "8080:80"
     depends_on:
       - user-service
       - task-service
       - notification-service
-
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
 volumes:
   user-data:
   task-data:

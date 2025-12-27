@@ -1,7 +1,10 @@
-package isaeva.userservice.model;
+package isaeva.taskservice.entity;
 
+import isaeva.taskservice.enums.TaskStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,29 +17,30 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "tasks")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class User {
+public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Column(nullable = false)
+    private String title;
 
     @Column(nullable = false)
-    private String password;
+    private String description;
 
-    @Column
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private TaskStatus taskStatus;
 
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "assiegnee_id")
+    private Long assigneeId;
+
+    private LocalDateTime createdAt;
+
+
 }

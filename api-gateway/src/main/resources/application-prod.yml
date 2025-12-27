@@ -1,0 +1,33 @@
+server:
+  port: 80
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user_route
+          uri: ${USER_SERVICE_URL:http://user-service:8081}
+          predicates:
+            - Path=/users/**
+            - Path=/auth/**
+            - Path=/v3/api-docs/**
+            - Path=/swagger-ui/**
+        - id: task_route
+          uri: ${TASK_SERVICE_URL:http://task-service:8082}
+          predicates:
+            - Path=/tasks/**
+            - Path=/v3/api-docs/**
+            - Path=/swagger-ui/**
+        - id: swagger_user
+          uri: ${USER_SERVICE_URL:http://user-service:8081}
+          predicates:
+            - Path=/swagger/user/**
+        - id: swagger_task
+          uri: ${TASK_SERVICE_URL:http://task-service:8082}
+          predicates:
+            - Path=/swagger/task/**
+jwt:
+  secret: ${JWT_SECRET}
+
+
+
+
